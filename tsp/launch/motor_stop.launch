@@ -1,4 +1,0 @@
-<launch>
-  <node pkg="tsp" type="motor_stop" name="motor_stop"  output="screen">
-  </node>
-</launch>
