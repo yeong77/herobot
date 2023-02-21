@@ -1,4 +1,0 @@
-<launch>
-   <node pkg="herobot" type="input" name="input" output="screen" />
-</launch>
- 

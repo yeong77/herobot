@@ -1,4 +1,0 @@
-<launch>
-   <node pkg="herobot" type="livestreaming_bottom" name="livestreaming_bottom" output="screen" />
-</launch>
- 

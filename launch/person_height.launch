@@ -1,4 +1,0 @@
-<launch>
-   <node pkg="herobot" type="person_height" name="person_height" output="screen" />
-</launch>
- 

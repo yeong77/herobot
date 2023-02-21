@@ -1,4 +1,0 @@
-<launch>
-   <node pkg="herobot" type="controller" name="controller" output="screen" />
-</launch>
- 
