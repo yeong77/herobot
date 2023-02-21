@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import rospy, roslaunch
+import numpy as np
+import subprocess
+import os
+import sys
+from enum import Enum
+from std_msgs.msg import UInt8, Float64
+from herobot.msg import String
+
+
+class controller():
+	def __init__(self):
+		self.ros_package_path = os.path.dirname(os.path.realpath(__file__))
+		self.ros_package_path = self.ros_package_path.replace('herobot_core/src', '')
+		self.sub__height_detect = rospy.Subscriber('height_detect', UInt8, self.cbReceiveMode, queue_size=1)
+		self.sub_clothes = rospy.Subscriber('clothes_detect', UInt8, self.cbReceiveMode, queue_size=1)
+
+		self.uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+		self.CurrentMode = Enum('CurrentMode', 'input_finish multilabel_top multilabel_bottom finish start_point')
+		
+		 	
+		self.Launcher = Enum('Launcher', 'launch_input launch_slam launch_multilabel_top launch_multilabel_bottom launch_height_estimation launch_motor_stop launch_tsp launch_start_point')
+		
+		self.launch_slam_launched = False
+		self.launch_tsp_launched = False
+		self.launch_height_estimation_launched = False
+		self.launch_input_launched = False
+		self.launch_multilabel_top_launched = False
+		self.launch_multilabel_bottom_launched = False
+		self.launch_motor_stop_launched = False
+		self.current_mode = self.CurrentMode.input_finish.value
+		
+		self.is_triggered = True		
+		
+		loop_rate = rospy.Rate(10) # 10hz
+		while not rospy.is_shutdown():
+			if self.is_triggered == True:
+                		self.fnControlNode()
+
+	def cbReceiveMode(self, mode_msg):  
+        	rospy.loginfo("starts the progress with %d", mode_msg.data)
+        
+        	self.current_mode = mode_msg.data
+        	self.is_triggered = True
+	
+	def fnControlNode(self):
+		if self.current_mode == self.CurrentMode.input_finish.value:
+			rospy.loginfo("New trigger for height estimation")
+			self.fnlaunch(self.Launcher.launch_height_estimation.value, True)
+			self.fnlaunch(self.Launcher.launch_multilabel_top.value, False)
+			self.fnlaunch(self.Launcher.launch_multilabel_bottom.value, False)
+		
+		elif self.current_mode == self.CurrentMode.multilabel_top.value:
+			rospy.loginfo("New trigger for multilabel top")
+			self.fnlaunch(self.Launcher.launch_height_estimation.value, False)
+			self.fnlaunch(self.Launcher.launch_multilabel_top.value, True)
+			
+		elif self.current_mode == self.CurrentMode.multilabel_bottom.value:
+			rospy.loginfo("New trigger for multilabel bottom")
+			self.fnlaunch(self.Launcher.launch_multilabel_top.value, False)
+			self.fnlaunch(self.Launcher.launch_multilabel_bottom.value, True)
+			
+		elif self.current_mode == self.CurrentMode.finish.value:
+			rospy.loginfo("New trigger for stop")
+			self.fnlaunch(self.Launcher.launch_multilabel_bottom.value, False)
+			self.fnlaunch(self.Launcher.launch_motor_stop.value, True)
+
+		elif self.current_mode == self.CurrentMode.start_point.value:
+			rospy.loginfo("New trigger for go to start point")
+			self.fnlaunch(self.Launcher.launch_motor_stop.value, False)
+			self.fnlaunch(self.Launcher.launch_start_point.value, True)
+			
+
+		self.is_triggered = False
+
+	def fnlaunch(self, launch_num, is_start):
+		if launch_num == self.Launcher.launch_height_estimation.value:  ##height_estimation
+			if is_start == True:
+				if self.launch_height_estimation_launched == False:
+					self.launch_height_estimation = roslaunch.scriptapi.ROSLaunch()
+					self.launch_height_estimation = roslaunch.parent.ROSLaunchParent(self.uuid, [self.ros_package_path + "/launch/person_height.launch"])
+					self.launch_height_estimation_launched == True
+					self.launch_height_estimation.start()
+				else:
+					pass
+			else:
+				if self.launch_height_estimation_launched == True:
+					self.launch_height_estimation_launched = False
+					self.launch_height_estimation.shutdown()
+				else:
+					pass
+
+		
+
+		elif launch_num == self.Launcher.launch_multilabel_top.value:  ##multilabel top
+			if is_start == True:
+				if self.launch_multilabel_top_launched == False:
+					self.launch_multilabel_top = roslaunch.scriptapi.ROSLaunch()
+					self.launch_multilabel_top = roslaunch.parent.ROSLaunchParent(self.uuid, [self.ros_package_path + "/launch/livestreaming_top.launch"])
+					self.launch_multilabel_top_launched == True
+					self.launch_multilabel_top.start()
+				else:
+					pass
+			else:
+				if self.launch_multilabel_top_launched == True:
+					self.launch_multilabel_top_launched = False
+					self.launch_multilabel_top.shutdown()
+				else:
+					pass
+
+		elif launch_num == self.Launcher.launch_multilabel_bottom.value:  ##multilabel bottom
+			if is_start == True:
+				if self.launch_multilabel_bottom_launched == False:
+					self.launch_multilabel_bottom = roslaunch.scriptapi.ROSLaunch()
+					self.launch_multilabel_bottom = roslaunch.parent.ROSLaunchParent(self.uuid, [self.ros_package_path + "/launch/livestreaming_bottom.launch"])
+					self.launch_multilabel_bottom_launched == True
+					self.launch_multilabel_bottom.start()
+				else:
+					pass
+			else:
+				if self.launch_multilabel_bottom_launched == True:
+					self.launch_multilabel_bottom_launched = False
+					self.launch_multilabel_bottom.shutdown()
+				else:
+					pass
+	
+		elif launch_num == self.Launcher.launch_motor_stop.value:  ##motor_stop 
+			if is_start == True:
+				if self.launch_motor_stop_launched == False:
+					self.launch_motor_stop = roslaunch.scriptapi.ROSLaunch()
+					self.launch_motor_stop = roslaunch.parent.ROSLaunchParent(self.uuid, ["/root/catkin_ws/src/tsp" "/launch/motor_stop.launch"])
+					self.launch_motor_stop_launched == True
+					self.launch_motor_stop.start()
+				else:
+					pass
+			else:
+				if self.launch_motor_stop_launched == True:
+					self.launch_motor_stop_launched = False
+					self.launch_motor_stop.shutdown()
+				else:
+					pass
+
+		elif launch_num == self.Launcher.launch_start_point.value:  ##motor_stop 
+			if is_start == True:
+				if self.launch_motor_stop_launched == False:
+					self.launch_motor_stop = roslaunch.scriptapi.ROSLaunch()
+					self.launch_motor_stop = roslaunch.parent.ROSLaunchParent(self.uuid, ["/root/catkin_ws/src/tsp" "/launch/starting_point.launch"])
+					self.launch_motor_stop_launched == True
+					self.launch_motor_stop.start()
+				else:
+					pass
+			else:
+				if self.launch_motor_stop_launched == True:
+					self.launch_motor_stop_launched = False
+					self.launch_motor_stop.shutdown()
+				else:
+					pass
+
+	def main(self):
+		rospy.spin()
+
+
+if __name__ == '__main__':
+    rospy.init_node('controller')
+    node = controller()
+    node.main()
+	
