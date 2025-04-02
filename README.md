@@ -5,6 +5,12 @@
 - [Multilbel classification](https://debuggercafe.com/multi-label-image-classification-with-pytorch-and-deep-learning/)
 - [Height estimation](https://github.com/IntelRealSense/librealsense/blob/master/wrappers/tensorflow/example2%20-%20person%20height.py)
 
+## System model 
+![system_model](./시스템모델.png)
+
+
+## Hardware configuration
+![Hardware_configuration](./하드웨어구성.png)
 
 ## Quick start
 
@@ -26,6 +32,8 @@ Run control launch file
 ```
 roslaunch herobot controller.launch 
 ```
+## Result 
+![system_operation](./operation.gif)
 
 ## Paper
 
