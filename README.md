@@ -32,8 +32,18 @@ Run control launch file
 ```
 roslaunch herobot controller.launch 
 ```
-## Result 
+
+## Deep-learning Result
+1. Height Estimation Result
+![height_estimation](./height_estimation.png)
+
+2. Multi-label classification
+![multi-label classification](./multilabel.png)
+
+
+## Video
 ![system_operation](./operation.gif)
+
 
 ## Paper
 
